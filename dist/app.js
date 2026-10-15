@@ -1,7 +1,7 @@
 const URL='https://fgomaujsdblpzxhnnqrg.supabase.co/rest/v1/';
 const KEY='sb_publishable_JOUqLZDnfGu_yCa6k6FVDQ_AYwpr72i';
 const $=id=>document.getElementById(id);
-const APP_VERSION='1.3.27';
+const APP_VERSION='1.3.28';
 $('app-version').textContent=`v${APP_VERSION}`;
 let items=[],selected=null,loadVersion=0,dialogMode='add',viewMode='empty';
 let itemClickTimer;
@@ -65,7 +65,6 @@ function buildGrid(entries,readOnly=false){
     if(values.get(iso)){const text=document.createElement('div');text.className='legacy-information';text.textContent=values.get(iso);cell.append(text)}
     if(!readOnly){const list=document.createElement('div');list.className='date-items';cell.append(list);dateCells.set(iso,list)}
     row.append(day,cell);fragment.append(row);
-    if(date.getUTCDay()===0){const gap=document.createElement('tr');gap.className='spacer';gap.setAttribute('aria-hidden','true');const td=document.createElement('td');td.colSpan=2;gap.append(td);fragment.append(gap)}
   }
   $('grid').replaceChildren(fragment);if(!readOnly)renderDateItems();else updateInformationSpan();
 }
