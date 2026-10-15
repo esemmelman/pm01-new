@@ -1,13 +1,13 @@
 const URL='https://fgomaujsdblpzxhnnqrg.supabase.co/rest/v1/';
 const KEY='sb_publishable_JOUqLZDnfGu_yCa6k6FVDQ_AYwpr72i';
 const $=id=>document.getElementById(id);
-const APP_VERSION='1.3.22';
+const APP_VERSION='1.3.23';
 let items=[],selected=null,loadVersion=0,dialogMode='add',viewMode='empty';
 let itemClickTimer;
 function cancelItemClick(){clearTimeout(itemClickTimer);itemClickTimer=null}
 // Keep the listbox visible long enough for the second click to reach it.
 function scheduleChoose(){cancelItemClick();itemClickTimer=setTimeout(()=>{itemClickTimer=null;choose()},600)}
-let dateItems=[],activeDateItem=null,dateDraft=null,dateCreating=false;
+let dateItems=[],activeDateItem=null,dateDraft=null,dateCreating=false,dateDeleting=false;
 let dateClickTimer,dragEntryId=null;
 function cancelDateClick(){clearTimeout(dateClickTimer);dateClickTimer=null}
 function clearDateDrag(){dragEntryId=null;document.querySelectorAll('.date-entry.drag-ready').forEach(button=>{button.draggable=false;button.classList.remove('drag-ready')});document.querySelectorAll('.date-drop-target').forEach(cell=>cell.classList.remove('date-drop-target'))}
@@ -91,7 +91,7 @@ $('delete').onclick=async()=>{const item=items.find(i=>i.id===selected);if(!item
 $('items').addEventListener('change',scheduleChoose);
 $('items').addEventListener('click',event=>{if(event.detail===1)scheduleChoose();else if(event.detail>1)cancelItemClick()});
 $('status').onclick=()=>{if(hasPending())flush();else if(viewMode==='all')showAll();else if(viewMode==='dayflow')importDayflow();else if(selected)choose();else refresh()};
-window.addEventListener('beforeunload',event=>{if(hasPending()||saving||dateCreating){event.preventDefault();event.returnValue=''}});document.addEventListener('visibilitychange',()=>{if(document.hidden)flush()});window.addEventListener('online',()=>hasPending()?flush():refresh());
+window.addEventListener('beforeunload',event=>{if(hasPending()||saving||dateCreating||dateDeleting){event.preventDefault();event.returnValue=''}});document.addEventListener('visibilitychange',()=>{if(document.hidden)flush()});window.addEventListener('online',()=>hasPending()?flush():refresh());
 // Persist rich item notes separately from the daily grid.
 const notesPending=new Map(),multiPending=new Map();let noteItem=null,noteVersion=0,multipleMode=false,multipleNotes=[],activeNote=null,multipleBusy=false,multipleLoading=false;
 const notesPane=document.createElement('section');notesPane.id='notes-pane';notesPane.hidden=true;
@@ -229,7 +229,7 @@ $('date-add-form').onsubmit=async event=>{
 };
 function openDateNote(id){const entry=dateItems.find(item=>item.id===id);if(!entry)return;activeDateItem=id;$('date-note-heading').textContent=items.find(item=>item.id===entry.item_id)?.name+' · '+entry.entry_date;$('date-note-name').value=entry.title;$('date-note-editor').innerHTML=cleanNotes(entry.content_html);dateNoteStatus(datePending.has(id)?'Unsaved changes…':'All changes saved');$('date-note-dialog').showModal();$('date-note-editor').focus()}
 function dateNoteStatus(message,error=false){$('date-note-status').textContent=message;$('date-note-status').classList.toggle('error',error);$('date-note-retry').hidden=!error}
-function queueDateNote(){const entry=dateItems.find(item=>item.id===activeDateItem);if(!entry)return;entry.title=$('date-note-name').value.trim()||'Untitled item';entry.content_html=cleanNotes($('date-note-editor').innerHTML);datePending.set(entry.id,{...datePending.get(entry.id),title:entry.title,content_html:entry.content_html});renderDateItems();dateNoteStatus('Unsaved changes…');status('Unsaved changes…');clearTimeout(saveTimer);saveTimer=setTimeout(flush,500)}
+function queueDateNote(){if(dateDeleting)return;const entry=dateItems.find(item=>item.id===activeDateItem);if(!entry)return;entry.title=$('date-note-name').value.trim()||'Untitled item';entry.content_html=cleanNotes($('date-note-editor').innerHTML);datePending.set(entry.id,{...datePending.get(entry.id),title:entry.title,content_html:entry.content_html});renderDateItems();dateNoteStatus('Unsaved changes…');status('Unsaved changes…');clearTimeout(saveTimer);saveTimer=setTimeout(flush,500)}
 async function saveDateNotes(){const batch=[...datePending.entries()];if(!batch.length)return;dateNoteStatus('Saving…');for(const [id,entry]of batch){await api('pm01_date_items?id=eq.'+id,'PATCH',entry);if(datePending.get(id)===entry)datePending.delete(id)}dateNoteStatus(datePending.has(activeDateItem)?'Unsaved changes…':'All changes saved')}
 $('date-note-name').addEventListener('input',queueDateNote);$('date-note-name').addEventListener('blur',()=>{$('date-note-name').value=dateItems.find(item=>item.id===activeDateItem)?.title||'';flush()});
 $('date-note-editor').addEventListener('input',queueDateNote);$('date-note-editor').addEventListener('blur',flush);
@@ -316,3 +316,22 @@ function layoutHorizontalBalloons(){
   }
 }
 window.addEventListener('resize',()=>{if($('horizontal-calendar').open)layoutHorizontalBalloons()});
+
+$('date-note-delete').onclick=async()=>{
+  const id=activeDateItem,entry=dateItems.find(item=>item.id===id);
+  if(!entry||dateDeleting||!confirm(`Delete “${entry.title}” on ${entry.entry_date} and its notes?`))return;
+  dateDeleting=true;$('date-note-delete').disabled=true;$('date-note-close').disabled=true;$('date-note-name').disabled=true;$('date-note-editor').contentEditable='false';
+  const toolbarButtons=[...$('date-toolbar').querySelectorAll('button')];toolbarButtons.forEach(button=>button.disabled=true);
+  try{
+    const deadline=Date.now()+10000;
+    while(saving&&Date.now()<deadline)await new Promise(resolve=>setTimeout(resolve,50));
+    if(saving)throw new Error('Notes are still saving. Try Delete task again shortly.');
+    await flush();
+    if(saving||datePending.has(id))throw new Error('Save the pending notes, then try Delete task again.');
+    await api('pm01_date_items?id=eq.'+encodeURIComponent(id),'DELETE');
+    datePending.delete(id);dateItems=dateItems.filter(item=>item.id!==id);renderDateItems();
+    if(activeDateItem===id)$('date-note-dialog').close();
+    status(hasPending()?'Unsaved changes…':'Task deleted');
+  }catch(error){dateNoteStatus('Could not delete task: '+error.message,true);status('Could not delete task: '+error.message,true)}
+  finally{dateDeleting=false;$('date-note-delete').disabled=false;$('date-note-close').disabled=false;$('date-note-name').disabled=false;$('date-note-editor').contentEditable='true';toolbarButtons.forEach(button=>button.disabled=false)}
+};

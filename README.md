@@ -2,7 +2,7 @@
 
 Public daily planner: https://esemmelman.github.io/pm01-new/
 
-Windows-style item list with add, rename, and delete. Single selection opens a daily grid from October 1, 2026 through December 31, 2027. Click the + in a Date cell to add a named entry for that date. Multiple entries can share a date. Click an entry in Information to open its rich text editor; its name and notes save automatically to Supabase, with automatic saving and retry on failure. The current frontend version is 1.3.22.
+Windows-style item list with add, rename, and delete. Single selection opens a daily grid from October 1, 2026 through December 31, 2027. Click the + in a Date cell to add a named entry for that date. Multiple entries can share a date. Click an entry in Information to open its rich text editor; its name and notes save automatically to Supabase, with automatic saving and retry on failure. The current frontend version is 1.3.23.
 
 The app opens with no planner selected. Selecting a planner hides the item panel so the calendar uses the full width; the chevron restores the listbox. All combines the dated information from every planner and labels entries with the planner name in parentheses. Entries in All still open their rich text notes; additions use an individual planner's calendar. The Date column is 112 pixels wide.
 
@@ -33,3 +33,5 @@ Long opens the full-page Long Calendar for the current planner, All, or DayFlow,
 In Long Calendar, hover over a date to see weeks and total days before or after the last task date in the current calendar. Weekends use darker shading.
 
 Click a date in Long Calendar to add an item on that date. In All, choose its planner in the add dialog. Added items appear immediately in the Long Calendar. DayFlow remains read-only.
+
+To delete a dated task, open its Item notes dialog and click Delete task, then confirm. This removes that task and its notes from both calendar views, leaving the planner and other tasks intact.
