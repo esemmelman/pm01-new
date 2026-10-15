@@ -1,7 +1,7 @@
 const URL='https://fgomaujsdblpzxhnnqrg.supabase.co/rest/v1/';
 const KEY='sb_publishable_JOUqLZDnfGu_yCa6k6FVDQ_AYwpr72i';
 const $=id=>document.getElementById(id);
-const APP_VERSION='1.3.19';
+const APP_VERSION='1.3.20';
 let items=[],selected=null,loadVersion=0,dialogMode='add',viewMode='empty';
 let itemClickTimer;
 function cancelItemClick(){clearTimeout(itemClickTimer);itemClickTimer=null}
@@ -286,10 +286,12 @@ function renderHorizontalCalendar(){
       const weekday=document.createElement('span');weekday.textContent=['S','M','T','W','T','F','S'][date.getUTCDay()];const number=document.createElement('strong');number.textContent=day;cell.append(weekday,number);strip.append(cell);
       const entries=tasks.get(iso);if(!entries)continue;
       cell.classList.add('horizontal-has-task');
+      for(const entry of entries){
       const line=document.createElement('div');line.className='horizontal-connector';line.dataset.date=iso;line.setAttribute('aria-hidden','true');taskLayer.append(line);
       const balloon=document.createElement('div');balloon.className='horizontal-balloon';balloon.dataset.date=iso;
-      for(const entry of entries){const text=document.createElement(entry.id?'button':'div');text.className='horizontal-task';text.textContent=entry.title;if(entry.id){text.type='button';text.onclick=()=>openDateNote(entry.id)}balloon.append(text)}
+      const text=document.createElement(entry.id?'button':'div');text.className='horizontal-task';text.textContent=entry.title.replace(/\s+/g,' ').trim();if(entry.id){text.type='button';text.onclick=()=>openDateNote(entry.id)}balloon.append(text);
       taskLayer.append(balloon);
+      }
     }
     if(taskLayer.children.length)strip.append(taskLayer);
     container.append(strip);
@@ -307,7 +309,7 @@ function layoutHorizontalBalloons(){
       const left=Math.max(0,Math.min(anchor-width/2,origin.width-width));let top=18;
       let collision;while((collision=placed.find(other=>left<other.right+10&&left+width+10>other.left&&top<other.bottom+10&&top+height+10>other.top)))top=collision.bottom+10;
       balloon.style.left=left+'px';balloon.style.top=top+'px';
-      const line=layer.querySelector(`.horizontal-connector[data-date="${balloon.dataset.date}"]`);line.style.left=anchor+'px';line.style.height=top+'px';
+      const line=balloon.previousElementSibling;line.style.left=anchor+'px';line.style.height=top+'px';
       placed.push({left,right:left+width,top,bottom:top+height});bottom=Math.max(bottom,top+height);
     }
     layer.style.height=bottom+'px';
