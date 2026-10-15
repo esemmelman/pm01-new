@@ -1,7 +1,7 @@
 const URL='https://fgomaujsdblpzxhnnqrg.supabase.co/rest/v1/';
 const KEY='sb_publishable_JOUqLZDnfGu_yCa6k6FVDQ_AYwpr72i';
 const $=id=>document.getElementById(id);
-const APP_VERSION='1.3.29';
+const APP_VERSION='1.3.30';
 $('app-version').textContent=`v${APP_VERSION}`;
 let items=[],selected=null,loadVersion=0,dialogMode='add',viewMode='dayflow';
 let itemClickTimer;
