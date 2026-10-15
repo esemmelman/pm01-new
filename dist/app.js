@@ -1,9 +1,9 @@
 const URL='https://fgomaujsdblpzxhnnqrg.supabase.co/rest/v1/';
 const KEY='sb_publishable_JOUqLZDnfGu_yCa6k6FVDQ_AYwpr72i';
 const $=id=>document.getElementById(id);
-const APP_VERSION='1.3.28';
+const APP_VERSION='1.3.29';
 $('app-version').textContent=`v${APP_VERSION}`;
-let items=[],selected=null,loadVersion=0,dialogMode='add',viewMode='empty';
+let items=[],selected=null,loadVersion=0,dialogMode='add',viewMode='dayflow';
 let itemClickTimer;
 function cancelItemClick(){clearTimeout(itemClickTimer);itemClickTimer=null}
 // Keep the listbox visible long enough for the second click to reach it.
@@ -250,6 +250,10 @@ function showDayflow(entries){dismissNotes();++loadVersion;selected=null;setView
 async function importDayflow(){if(importing)return;await flush();if(saving||hasPending()){status('Wait for changes to save, then click Import DayFlow again.',true);return}importing=true;$('import-dayflow').disabled=true;const version=++loadVersion;try{status('Importing DayFlow…');const tasks=await dayflowTasks();const grouped=groupDayflow(tasks);const cached=await api('pm01_dayflow_entries?select=entry_date');const dates=new Set([...grouped.keys(),...cached.map(row=>row.entry_date)]);const updates=[...dates].map(entry_date=>({entry_date,content:grouped.get(entry_date)||''}));if(updates.length)await api('pm01_dayflow_entries?on_conflict=entry_date','POST',updates);if(version===loadVersion){showDayflow(updates);status(`Imported ${tasks.length} DayFlow items · All changes saved`)}}catch(error){status(error.message+' · Click Import DayFlow to retry',true)}finally{importing=false;$('import-dayflow').disabled=false}}
 $('import-dayflow').onclick=importDayflow;
 
+setView('dayflow');
+$('empty').hidden=true;
+$('title').textContent='DayFlow';
+$('description').textContent='Loading DayFlow calendar…';
 refresh();
 
 // Month strips include every day, independently of the daily-grid filters.
