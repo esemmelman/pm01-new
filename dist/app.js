@@ -1,7 +1,7 @@
 const URL='https://fgomaujsdblpzxhnnqrg.supabase.co/rest/v1/';
 const KEY='sb_publishable_JOUqLZDnfGu_yCa6k6FVDQ_AYwpr72i';
 const $=id=>document.getElementById(id);
-const APP_VERSION='1.3.31';
+const APP_VERSION='1.3.32';
 $('app-version').textContent=`v${APP_VERSION}`;
 let items=[],selected=null,loadVersion=0,dialogMode='add',viewMode='empty';
 let itemClickTimer;
@@ -339,6 +339,7 @@ $('date-note-delete').onclick=async()=>{
 };
 $('gantt-view').onclick=()=>{$('gantt-calendar').showModal();renderGantt()};
 $('gantt-close').onclick=()=>$('gantt-calendar').close();
+function ganttDateTooltip(date){const days=dateDistance(date);return `${date} · ${Math.abs(days)} ${Math.abs(days)===1?'day':'days'} ${days<0?'before today':days>0?'from today':'from today (today)'}`}
 function renderGantt(){
   const tasks=[];
   for(const row of $('grid').querySelectorAll('tr[data-date]')){
@@ -358,7 +359,10 @@ function renderGantt(){
   const head=document.createElement('thead'),header=document.createElement('tr'),label=document.createElement('th');label.textContent='Task';label.className='gantt-label';header.append(label);
   for(let i=0;i<days;i++){
     const date=new Date(start+i*86400000),iso=date.toISOString().slice(0,10),cell=document.createElement('th');
-    cell.textContent=date.getUTCDate()===1?date.toLocaleDateString('en-US',{month:'short',timeZone:'UTC'})+' 1':date.getUTCDate();cell.title=iso;cell.className='gantt-day';
+    const weekday=document.createElement('span');weekday.className='gantt-weekday';weekday.textContent=['S','M','T','W','T','F','S'][date.getUTCDay()];
+    const number=document.createElement('strong');number.textContent=date.getUTCDate();cell.append(weekday,number);
+    if(date.getUTCDate()===1){const month=document.createElement('span');month.className='gantt-month';month.textContent=date.toLocaleDateString('en-US',{month:'short',timeZone:'UTC'});cell.append(month)}
+    cell.title=ganttDateTooltip(iso);cell.className='gantt-day';
     if(iso===todayKey())cell.classList.add('gantt-today');header.append(cell);
   }
   head.append(header);table.append(head);const body=document.createElement('tbody');
@@ -366,7 +370,8 @@ function renderGantt(){
     const row=document.createElement('tr'),name=document.createElement('th');name.scope='row';name.className='gantt-label';
     const text=document.createElement(task.id?'button':'span');text.textContent=task.title;if(task.id){text.type='button';text.onclick=()=>openDateNote(task.id)}name.append(text);row.append(name);
     const timeline=document.createElement('td');timeline.colSpan=days;timeline.className='gantt-track';
-    const mark=document.createElement(task.id?'button':'span');mark.className='gantt-mark';mark.style.left=(Math.round((Date.parse(task.date+'T00:00:00Z')-start)/86400000)*26+2)+'px';mark.title=task.date+' · '+task.title;mark.setAttribute('aria-label',mark.title);
+    timeline.onmousemove=event=>{if(event.target!==timeline)return;const day=Math.max(0,Math.min(days-1,Math.floor((event.clientX-timeline.getBoundingClientRect().left)/26)));timeline.title=ganttDateTooltip(new Date(start+day*86400000).toISOString().slice(0,10))};
+    const mark=document.createElement(task.id?'button':'span');mark.className='gantt-mark';mark.style.left=(Math.round((Date.parse(task.date+'T00:00:00Z')-start)/86400000)*26+2)+'px';mark.title=ganttDateTooltip(task.date)+' · '+task.title;mark.setAttribute('aria-label',mark.title);
     if(task.id){mark.type='button';mark.onclick=()=>openDateNote(task.id)}
     timeline.append(mark);row.append(timeline);body.append(row);
   }

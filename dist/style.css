@@ -47,3 +47,9 @@ button.gantt-mark:hover{background:#12579e}
 .gantt-table tbody .gantt-label{top:auto}
 .gantt-table thead th{position:sticky;top:0;z-index:3}
 .gantt-table thead .gantt-label{z-index:4}
+
+#gantt-close.gantt-back{font-size:30px;line-height:1;padding:3px 13px}
+.gantt-day span,.gantt-day strong{display:block;line-height:16px}
+.gantt-weekday{color:#6b788b;font-weight:400}
+.gantt-month{font-size:9px}
+.gantt-table thead .gantt-day{height:58px}
