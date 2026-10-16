@@ -1,7 +1,7 @@
 const URL='https://fgomaujsdblpzxhnnqrg.supabase.co/rest/v1/';
 const KEY='sb_publishable_JOUqLZDnfGu_yCa6k6FVDQ_AYwpr72i';
 const $=id=>document.getElementById(id);
-const APP_VERSION='1.3.30';
+const APP_VERSION='1.3.31';
 $('app-version').textContent=`v${APP_VERSION}`;
 let items=[],selected=null,loadVersion=0,dialogMode='add',viewMode='empty';
 let itemClickTimer;
@@ -30,6 +30,7 @@ function updateInformationSpan(){
   label.title=`From ${today} · Next: days until ${next||'none'} · end: weeks, days until ${last||'none'}`;
   filterTaskDates(dates);
   if($('horizontal-calendar').open)renderHorizontalCalendar();
+  if($('gantt-calendar').open)renderGantt();
 }
 function hasPending(){return pending.size||notesPending.size||datePending.size||multiPending.size}
 function todayKey(now=new Date()){const parts=new Intl.DateTimeFormat('en-US',{timeZone:'America/Los_Angeles',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(now);const part=type=>parts.find(p=>p.type===type).value;return `${part('year')}-${part('month')}-${part('day')}`}
@@ -41,7 +42,7 @@ function sortItems(){items.sort((a,b)=>a.name.localeCompare(b.name,'en',{sensiti
 function renderItems(){sortItems();const value=selected;$('items').replaceChildren(...items.map(item=>{const option=document.createElement('option');option.value=item.id;option.textContent=item.name;return option}));$('items').value=value||'';$('open-notes').disabled=$('open-multiple-notes').disabled=$('edit').disabled=$('delete').disabled=!selected}
 function setSidebar(visible){$('item-panel').hidden=!visible;$('toggle-items').textContent=visible?'‹':'›';$('toggle-items').setAttribute('aria-expanded',String(visible));$('toggle-items').setAttribute('aria-label',visible?'Hide planner items':'Show planner items');$('toggle-items').title=visible?'Hide planner items':'Show planner items'}
 $('toggle-items').onclick=()=>setSidebar($('item-panel').hidden);
-function setView(mode){cancelItemClick();cancelDateClick();clearDateDrag();viewMode=mode;$('horizontal-view').disabled=!['item','all','dayflow'].includes(mode);$('tasks-only').disabled=$('mondays-only').disabled=mode==='empty';$('all-items').setAttribute('aria-pressed',String(mode==='all'));$('import-dayflow').setAttribute('aria-pressed',String(mode==='dayflow'))}
+function setView(mode){cancelItemClick();cancelDateClick();clearDateDrag();viewMode=mode;$('gantt-view').disabled=mode==='empty';$('horizontal-view').disabled=!['item','all','dayflow'].includes(mode);$('tasks-only').disabled=$('mondays-only').disabled=mode==='empty';$('all-items').setAttribute('aria-pressed',String(mode==='all'));$('import-dayflow').setAttribute('aria-pressed',String(mode==='dayflow'))}
 function showEmpty(){selected=null;setView('empty');renderItems();setSidebar(true);$('grid-wrap').hidden=true;$('empty').hidden=false;$('title').textContent='Your daily plan';$('description').textContent='Choose an item on the left, or add a new item.'}
 async function refresh(){try{items=await api('pm01_items?select=*&order=created_at.asc');sortItems();selected=items.find(item=>item.id===selected)?.id||null;renderItems();if(viewMode==='all')await showAll();else if(viewMode==='dayflow')await importDayflow();else if(selected)await choose();else{showEmpty();status('Connected · All changes saved')}}catch(error){status(error.message+' · Click to retry',true)}}
 async function apiRows(path){const rows=[];for(let offset=0;;offset+=1000){const page=await api(path+'&limit=1000&offset='+offset);rows.push(...page);if(page.length<1000)return rows}}
@@ -336,3 +337,38 @@ $('date-note-delete').onclick=async()=>{
   }catch(error){dateNoteStatus('Could not delete task: '+error.message,true);status('Could not delete task: '+error.message,true)}
   finally{dateDeleting=false;$('date-note-delete').disabled=false;$('date-note-close').disabled=false;$('date-note-name').disabled=false;$('date-note-editor').contentEditable='true';toolbarButtons.forEach(button=>button.disabled=false)}
 };
+$('gantt-view').onclick=()=>{$('gantt-calendar').showModal();renderGantt()};
+$('gantt-close').onclick=()=>$('gantt-calendar').close();
+function renderGantt(){
+  const tasks=[];
+  for(const row of $('grid').querySelectorAll('tr[data-date]')){
+    const legacy=row.querySelector('.legacy-information');
+    if(legacy?.textContent.trim())tasks.push({date:row.dataset.date,title:legacy.textContent.trim()});
+    for(const button of row.querySelectorAll('.date-entry'))tasks.push({date:row.dataset.date,title:button.textContent,id:button.dataset.entryId});
+  }
+  tasks.sort((a,b)=>a.date.localeCompare(b.date)||a.title.localeCompare(b.title));
+  $('gantt-title').textContent=$('title').textContent+' · Gantt chart';
+  const chart=$('gantt-chart');chart.replaceChildren();
+  if(!tasks.length){const empty=document.createElement('p');empty.className='horizontal-empty';empty.textContent='No dated tasks yet.';chart.append(empty);return}
+  const start=Date.parse(tasks[0].date.slice(0,7)+'-01T00:00:00Z');
+  const final=new Date(tasks.at(-1).date+'T00:00:00Z');
+  const end=Date.UTC(final.getUTCFullYear(),final.getUTCMonth()+1,0);
+  const days=Math.round((end-start)/86400000)+1;
+  const table=document.createElement('table');table.className='gantt-table';table.style.width=(260+days*26)+'px';
+  const head=document.createElement('thead'),header=document.createElement('tr'),label=document.createElement('th');label.textContent='Task';label.className='gantt-label';header.append(label);
+  for(let i=0;i<days;i++){
+    const date=new Date(start+i*86400000),iso=date.toISOString().slice(0,10),cell=document.createElement('th');
+    cell.textContent=date.getUTCDate()===1?date.toLocaleDateString('en-US',{month:'short',timeZone:'UTC'})+' 1':date.getUTCDate();cell.title=iso;cell.className='gantt-day';
+    if(iso===todayKey())cell.classList.add('gantt-today');header.append(cell);
+  }
+  head.append(header);table.append(head);const body=document.createElement('tbody');
+  for(const task of tasks){
+    const row=document.createElement('tr'),name=document.createElement('th');name.scope='row';name.className='gantt-label';
+    const text=document.createElement(task.id?'button':'span');text.textContent=task.title;if(task.id){text.type='button';text.onclick=()=>openDateNote(task.id)}name.append(text);row.append(name);
+    const timeline=document.createElement('td');timeline.colSpan=days;timeline.className='gantt-track';
+    const mark=document.createElement(task.id?'button':'span');mark.className='gantt-mark';mark.style.left=(Math.round((Date.parse(task.date+'T00:00:00Z')-start)/86400000)*26+2)+'px';mark.title=task.date+' · '+task.title;mark.setAttribute('aria-label',mark.title);
+    if(task.id){mark.type='button';mark.onclick=()=>openDateNote(task.id)}
+    timeline.append(mark);row.append(timeline);body.append(row);
+  }
+  table.append(body);chart.append(table);
+}

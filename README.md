@@ -2,7 +2,7 @@
 
 Public daily planner: https://esemmelman.github.io/pm01-new/
 
-Windows-style item list with add, rename, and delete. Single selection opens a daily grid from October 1, 2026 through December 31, 2027. Click the + in a Date cell to add a named entry for that date. Multiple entries can share a date. Click an entry in Information to open its rich text editor; its name and notes save automatically to Supabase, with automatic saving and retry on failure. The current frontend version is 1.3.30.
+Windows-style item list with add, rename, and delete. Single selection opens a daily grid from October 1, 2026 through December 31, 2027. Click the + in a Date cell to add a named entry for that date. Multiple entries can share a date. Click an entry in Information to open its rich text editor; its name and notes save automatically to Supabase, with automatic saving and retry on failure. The current frontend version is 1.3.31.
 
 The app opens with the planner list visible and no planner selected. DayFlow imports only when Import DayFlow is clicked. Selecting a planner hides the item panel so the calendar uses the full width; the chevron restores the listbox. All combines the dated information from every planner and labels entries with the planner name in parentheses. Entries in All still open their rich text notes; additions use an individual planner's calendar. The Date column is 112 pixels wide.
 
@@ -37,3 +37,5 @@ Click a date in Long Calendar to add an item on that date. In All, choose its pl
 To delete a dated task, open its Item notes dialog and click Delete task, then confirm. This removes that task and its notes from both calendar views, leaving the planner and other tasks intact.
 
 Select text and click the crossed-out S (Strikethrough) in any rich text toolbar to toggle strikeout. It is available in Notes, Multiple Notes, and dated task notes, and persists when saved.
+
+Gantt, beside the calendar title, shows the current planner, All, or DayFlow tasks on a dated timeline. Each task occupies its scheduled day because tasks have no duration. Click a task to open its notes; Close or Escape returns to the calendar.

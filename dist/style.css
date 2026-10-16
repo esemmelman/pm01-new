@@ -33,3 +33,17 @@ button.horizontal-day{font:inherit;font-size:12px;border:0;border-bottom:2px sol
 .delete-task{color:#b42318;border-color:#d9a6a1;background:#fff}.delete-task:hover{color:#912018;border-color:#b42318;background:#fff0ee}
 
 .horizontal-month+.horizontal-month{border-top:0}.horizontal-month:first-child{border-top-left-radius:6px;border-top-right-radius:6px}.horizontal-month:last-child{border-bottom-left-radius:6px;border-bottom-right-radius:6px}
+#gantt-calendar{inset:0;margin:0;width:100vw;max-width:none;height:100dvh;max-height:none;padding:0;border:0;border-radius:0;background:#f3f5f8;color:#202b3b}
+#gantt-chart{padding:24px;overflow:auto;max-height:calc(100dvh - 110px)}
+.gantt-table{table-layout:fixed;border-collapse:separate;border-spacing:0;background:#fff}
+.gantt-table th,.gantt-table td{box-sizing:border-box;border-bottom:1px solid #d5dce6;height:42px;padding:0}
+.gantt-table .gantt-label{position:sticky;left:0;width:260px;min-width:260px;background:#fff;z-index:2;padding:8px 12px;text-align:left;white-space:normal;overflow-wrap:anywhere;border-right:1px solid #cbd3df}
+.gantt-label button{background:none;border:0;padding:0;text-align:left;color:#1767bd;font:inherit;cursor:pointer}
+.gantt-table .gantt-day{width:26px;min-width:26px;text-align:center;font-size:10px;background:#e9eef5;border-right:1px solid #d5dce6;white-space:normal}
+.gantt-table .gantt-today{background:#fff3c4}
+.gantt-track{position:relative;background:repeating-linear-gradient(to right,transparent 0,transparent 25px,#e4e9f0 25px,#e4e9f0 26px)}
+.gantt-mark{position:absolute;top:11px;width:22px;height:20px;border:1px solid #12579e;border-radius:4px;background:#287ac5;padding:0;display:block}
+button.gantt-mark:hover{background:#12579e}
+.gantt-table tbody .gantt-label{top:auto}
+.gantt-table thead th{position:sticky;top:0;z-index:3}
+.gantt-table thead .gantt-label{z-index:4}
