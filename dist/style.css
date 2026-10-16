@@ -56,3 +56,9 @@ button.gantt-mark:hover{background:#12579e}
 .gantt-table thead .gantt-day{height:58px}
 
 .gantt-table tbody .gantt-label{font-size:14px}
+
+.gantt-table .gantt-day{font-size:12px}
+.gantt-day .gantt-month{font-size:10px}
+.gantt-table tbody th,.gantt-table tbody td{height:34px}
+.gantt-table tbody .gantt-label{padding:5px 12px}
+.gantt-mark{top:7px}
